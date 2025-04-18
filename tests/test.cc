@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <utf8/stlscanner.hh>
 #include <utf8/stlstring.hh>
 
 inline void string_eq(
@@ -69,4 +70,18 @@ TEST(
   ASSERT_EQ(string.view().from(from).codepoints().peek(), 'w');
 
   string_eq("world", string.view().from_to(from, to));
+}
+
+TEST(
+    ScannerTests,
+    Scan) {
+  const auto string = utf8::String::from_cstr_unchecked("1234 word");
+
+  uint64_t     integer {0};
+  utf8::String word {};
+  ASSERT_EQ(
+      utf8::scanner::Error::None,
+      utf8::Scanner {string}.scan(integer, utf8::scanner::Whitespace {}, word));
+
+  EXPECT_EQ(integer, 1234);
 }

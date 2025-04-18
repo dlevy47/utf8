@@ -35,6 +35,7 @@ public:
   using OptionalCodepoint = typename Traits::OptionalCodepoint;
   using BaseException     = typename Traits::BaseException;
 
+  // Exception is the base exception that all String exceptions inherit from.
   class Exception : BaseException {
   public:
     Exception(
@@ -47,26 +48,34 @@ public:
     const char* what_ {nullptr};
   };
 
+  // OutOfRangeException is thrown when a [start, end) interval is not valid, or
+  // when other provided indices are invalid.
   class OutOfRangeException : public Exception {
     using Exception::Exception;
   };
 
+  // Codepoints is an iterator over the codepoints of a String.
   class Codepoints {
   public:
+    // string is the String that this Codepoints reads from.
     const String& string;
 
     Codepoints(const Codepoints&) = default;
 
+    // Creates a Codepoints that iterates through all codepoints of the provided
+    // String.
     Codepoints(
         const String& string)
-        : string {string} {}
+        : string {string},
+          end_ {string.data_.size() - 1} {}
 
+    // peek returns the next utf8 codepoint, if there is one.
     OptionalCodepoint peek() const {
       if (index_ >= end_) {
         return OptionalCodepoint {};
       }
 
-      auto     s       = string.data.data() + index_;
+      auto     s       = string.data_.data() + index_;
       SizeType advance = 0;
 
       Codepoint cp = codepoint(advance, s);
@@ -77,17 +86,19 @@ public:
       return OptionalCodepoint {cp};
     }
 
+    // next returns the next utf8 codepoint, if there is one, and increments the
+    // iterator.
     OptionalCodepoint next() {
       if (index_ >= end_) {
         return OptionalCodepoint {};
       }
 
-      auto     s       = string.data.data() + index_;
+      auto     s       = string.data_.data() + index_;
       SizeType advance = 0;
 
       Codepoint cp = codepoint(advance, s);
       if (advance == 0) {
-        index_ = string.data.size();
+        index_ = string.data_.size();
         return OptionalCodepoint {};
       }
 
@@ -96,6 +107,7 @@ public:
       return OptionalCodepoint {cp};
     }
 
+    // advances iterates this Codepoints count times.
     Codepoints& advance(
         const SizeType count) {
       for (SizeType i = 0; i < count; ++i) {
@@ -124,7 +136,7 @@ public:
         const SizeType index)
         : string {string},
           index_ {index},
-          end_ {string.data.size() - 1} {}
+          end_ {string.data_.size() - 1} {}
 
     SizeType index_ {0};
     SizeType end_;
@@ -133,6 +145,7 @@ public:
     friend class View;
   };
 
+  // View is a view to a subset of a String.
   class View {
   public:
     const String& string;
@@ -141,7 +154,7 @@ public:
         const String& string)
         : string {string},
           start_ {0},
-          end_ {string.data.size() - 1} {}
+          end_ {string.data_.size() - 1} {}
 
     Codepoints codepoints() const { return Codepoints {string, start_, end_}; }
 
@@ -174,7 +187,7 @@ public:
         const SizeType start)
         : string {string},
           start_ {start},
-          end_ {string.data.size() - 1} {}
+          end_ {string.data_.size() - 1} {}
 
     View(
         const String&  string,
@@ -187,11 +200,11 @@ public:
         throw OutOfRangeException {"negative range"};
       }
 
-      if (start >= string.data.size()) {
+      if (start >= string.data_.size()) {
         throw OutOfRangeException {"invalid start"};
       }
 
-      if (end >= string.data.size()) {
+      if (end >= string.data_.size()) {
         throw OutOfRangeException {"invalid end"};
       }
     }
@@ -201,20 +214,42 @@ public:
   };
 
 public:
+  String() : data_ {{'\0'}} {}
+
+  String(
+      const Codepoints& start,
+      const Codepoints& end) {
+    if (&start.string != &end.string) {
+      throw OutOfRangeException {"start and end are not from the same string"};
+    }
+
+    data_ = Vector {
+        start.string.data.data() + start.index_,
+        start.string.data.data() + end.index_};
+
+    normalize_();
+  }
+
+  String(
+      Vector&& codepoints)
+      : data_ {Traits::move_vector(codepoints)} {
+    normalize_();
+  }
+
   template <typename OtherTraits>
   String(
       const String<OtherTraits>& rhs)
-      : data {rhs.data} {}
+      : data_ {rhs.data_} {}
 
   template <typename OtherTraits>
   String(
       String<OtherTraits>&& rhs)
-      : data {Traits::move_vector(rhs.data)} {}
+      : data_ {Traits::move_vector(rhs.data_)} {}
 
   template <typename OtherTraits>
   String& operator=(
       const String<OtherTraits>& rhs) {
-    data = rhs.data;
+    data_ = rhs.data_;
     return *this;
   }
 
@@ -225,7 +260,7 @@ public:
       return *this;
     }
 
-    data = Traits::move_vector(rhs.data);
+    data_ = Traits::move_vector(rhs.data_);
     return *this;
   }
 
@@ -248,19 +283,18 @@ public:
   View       view() const { return View {*this}; }
 
 private:
-  Vector data {};
+  Vector data_ {};
 
   void normalize_() {
-    if (data.back() != '\0') {
-      data.push_back('\0');
+    if (data_.back() != '\0') {
+      data_.push_back('\0');
     }
   }
 
-  String() = default;
   String(
       const char* start,
       const char* end)
-      : data {
+      : data_ {
             start,
             end} {
     normalize_();

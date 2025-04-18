@@ -15,7 +15,7 @@ struct StringTraits {
   using BaseException     = std::exception;
 
   constexpr static Vector&& move_vector(
-      Vector&& t) noexcept {
+      Vector& t) noexcept {
     return std::move(t);
   }
 
