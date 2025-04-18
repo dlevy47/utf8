@@ -26,4 +26,11 @@ struct StringTraits {
 
 using String = string::String<StringTraits>;
 
+namespace string {
+static utf8::String from_string_unchecked(
+    const std::string& s) {
+  return utf8::String::from_cstr_unchecked(s.c_str(), s.size() + 1);
+}
+} // namespace string
+
 } // namespace utf8

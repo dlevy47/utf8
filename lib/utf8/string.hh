@@ -92,7 +92,13 @@ public:
       const char* cstr) {
     const SizeType len = Traits::strlen(cstr);
 
-    return String {cstr, cstr + len + 1};
+    return from_cstr_unchecked(cstr, len + 1);
+  }
+
+  static String from_cstr_unchecked(
+      const char*    cstr,
+      const SizeType len) {
+    return String {cstr, cstr + len};
   }
 
   Codepoints codepoints() const { return Codepoints {*this}; }
@@ -100,13 +106,21 @@ public:
 private:
   Vector data {};
 
+  void normalize_() {
+    if (data.back() != '\0') {
+      data.push_back('\0');
+    }
+  }
+
   String() = default;
   String(
       const char* start,
       const char* end)
       : data {
             start,
-            end} {}
+            end} {
+    normalize_();
+  }
 };
 
 } // namespace string
