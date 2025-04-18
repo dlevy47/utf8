@@ -3,13 +3,13 @@
 #ifdef UTF8_INTEGRAL_TYPES
 #define utf8_u8 UTF8_UINT8_T
 #define utf8_u32 UTF8_UINT32_T
-#define utf8_isize UTF8_ISIZE_T
+#define utf8_usize UTF8_ISIZE_T
 #else
 #include <cstddef>
 #include <cstdint>
 #define utf8_u8 uint8_t
 #define utf8_u32 uint32_t
-#define utf8_isize size_t
+#define utf8_usize size_t
 #endif
 
 namespace utf8 {
@@ -23,7 +23,7 @@ enum : utf8_u8 {
   CONTINUE  = 0b10000000,
 };
 
-inline utf8_isize encode(
+inline utf8_usize encode(
     utf8_u8 (&bytes)[4],
     const utf8_u32 codepoint) {
   if (codepoint >= 0x0 && codepoint < 0x80) {
@@ -54,53 +54,54 @@ inline utf8_isize encode(
 }
 
 inline utf8_u32 codepoint(
-    const utf8_u8** s) {
+    utf8_usize&          advance,
+    const utf8_u8* const s) {
   do {
-    utf8_u32 codepoint = static_cast<utf8_u32>(**s);
+    utf8_u32 codepoint = static_cast<utf8_u32>(*s);
     if (codepoint == 0) {
       return 0;
     }
 
     if ((codepoint & FOURBYTE) == FOURBYTE) {
-      if (*((*s) + 1) == 0 || *((*s) + 2) == 0 || *((*s) + 3) == 0) {
+      if (s[1] == 0 || s[2] == 0 || s[3] == 0) {
         break;
       }
 
       codepoint = static_cast<utf8_u32>(codepoint & ~FOURBYTE) << 18 |
-                  static_cast<utf8_u32>((*((*s) + 1) & MASK)) << 12 |
-                  static_cast<utf8_u32>((*((*s) + 2) & MASK)) << 6 |
-                  static_cast<utf8_u32>((*((*s) + 3) & MASK));
+                  static_cast<utf8_u32>(s[1] & MASK) << 12 |
+                  static_cast<utf8_u32>(s[2] & MASK) << 6 |
+                  static_cast<utf8_u32>(s[3] & MASK);
 
-      (*s) += 4;
+      advance = 4;
       return codepoint;
     } else if ((codepoint & THREEBYTE) == THREEBYTE) {
-      if (*((*s) + 1) == 0 || *((*s) + 2) == 0) {
+      if (s[1] == 0 || s[2] == 0) {
         break;
       }
 
       codepoint = static_cast<utf8_u32>(codepoint & ~THREEBYTE) << 12 |
-                  static_cast<utf8_u32>((*((*s) + 1) & MASK)) << 6 |
-                  static_cast<utf8_u32>((*((*s) + 2) & MASK));
+                  static_cast<utf8_u32>(s[1] & MASK) << 6 |
+                  static_cast<utf8_u32>(s[2] & MASK);
 
-      (*s) += 3;
+      advance = 3;
       return codepoint;
     } else if ((codepoint & TWOBYTE) == TWOBYTE) {
-      if (*((*s) + 1) == 0) {
+      if (s[1] == 0) {
         break;
       }
 
       codepoint = static_cast<utf8_u32>(codepoint & ~TWOBYTE) << 6 |
-                  static_cast<utf8_u32>((*((*s) + 1) & MASK));
+                  static_cast<utf8_u32>(s[1] & MASK);
 
-      (*s) += 2;
+      advance = 2;
       return codepoint;
     } else if ((codepoint & ONEBYTE) == ONEBYTE) {
-      (*s) += 1;
+      advance = 1;
       return codepoint;
     }
   } while (false);
 
-  *s = nullptr;
+  advance = 0;
   return 0;
 }
 
@@ -121,4 +122,4 @@ inline bool is_whitespace(
 
 #undef utf8_u8
 #undef utf8_u32
-#undef utf8_isize
+#undef utf8_usize
