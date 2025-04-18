@@ -1,0 +1,12 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveAssignments: Consecutive
+SpaceBeforeCpp11BracedList: true
+PointerAlignment: Left
+AlignAfterOpenBracket: AlwaysBreak
+BinPackArguments: true
+BinPackParameters: AlwaysOnePerLine
+BreakFunctionDefinitionParameters: true
+SkipMacroDefinitionBody: true
