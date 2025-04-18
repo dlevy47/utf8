@@ -54,7 +54,7 @@ inline utf8_isize encode(
 }
 
 inline utf8_u32 codepoint(
-    const char** s) {
+    const utf8_u8** s) {
   do {
     utf8_u32 codepoint = static_cast<utf8_u32>(**s);
     if (codepoint == 0) {

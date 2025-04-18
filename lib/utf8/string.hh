@@ -26,26 +26,29 @@ public:
   using SizeType          = typename Traits::SizeType;
   using Vector            = typename Traits::Vector;
   using OptionalCodepoint = typename Traits::OptionalCodepoint;
-  using move              = typename Traits::move;
 
   class Codepoints {
   public:
     const String& string;
 
+    Codepoints(
+        const String& string)
+        : string {string} {}
+
     OptionalCodepoint next() {
-      if (index >= string.data->size()) {
+      if (index >= string.data.size() - 1) {
         return OptionalCodepoint {};
       }
 
-      const char*       s     = string.data->c_str() + index;
-      const char* const start = s;
-      Codepoint         cp    = codepoint(&s);
+      auto       s     = string.data.data() + index;
+      const auto start = s;
+      Codepoint  cp    = codepoint(&s);
       if (!s) {
-        index = string.data->size();
+        index = string.data.size();
         return OptionalCodepoint {};
       }
 
-      index += start - s;
+      index += s - start;
 
       return OptionalCodepoint {cp};
     }
