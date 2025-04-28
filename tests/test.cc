@@ -81,7 +81,9 @@ TEST(
   utf8::String word {};
   ASSERT_EQ(
       utf8::scanner::Error::None,
-      utf8::Scanner {string}.scan(integer, utf8::scanner::Whitespace {}, word));
+      utf8::Scanner {string}.scan(
+          &integer, utf8::scanner::Whitespace {}, &word));
 
   EXPECT_EQ(integer, 1234);
+  string_eq("word", word);
 }

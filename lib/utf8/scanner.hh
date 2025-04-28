@@ -21,7 +21,7 @@ template <typename Traits, typename T> struct Scan {
 };
 
 template <typename Integral, int Base> struct UnsignedInteger {
-  Integral& into;
+  Integral* into;
 };
 
 struct Whitespace {};
@@ -46,7 +46,7 @@ public:
       typename T,
       typename... Args>
   Error scan(
-      T& t,
+      T t,
       Args... args) {
     const Error err = Scan<Traits, T>::scan(t, codepoints);
     if (err != Error::None) {
@@ -97,16 +97,16 @@ template <typename Traits> struct Scan<Traits, Whitespace> {
   }
 };
 
-template <typename Traits> struct Scan<Traits, string::String<Traits>> {
+template <typename Traits> struct Scan<Traits, string::String<Traits>*> {
   static Error scan(
-      string::String<Traits>&             into,
+      string::String<Traits>*             into,
       string::String<Traits>::Codepoints& codepoints) {
     typename Traits::Vector ret {};
     while (auto cp = codepoints.next()) {
       ret.push_back(*cp);
     }
 
-    into = string::String<Traits> {Traits::move_vector(ret)};
+    *into = string::String<Traits> {Traits::move_vector(ret)};
 
     return Error::None;
   }
@@ -145,7 +145,7 @@ struct Scan<Traits, UnsignedInteger<Integral, Base>> {
       return Error::EndOfFile;
     }
 
-    into.into = value;
+    *into.into = value;
     return Error::None;
   }
 };
