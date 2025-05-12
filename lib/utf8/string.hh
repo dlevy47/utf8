@@ -120,6 +120,20 @@ public:
       return *this;
     }
 
+    // move_to moves this Codepoints to the position pointed to by the provided
+    // iterator. The provided iterator must be from the same string. The
+    // endpoint of this Codepoints is not modified.
+    Codepoints& move_to(
+        const Codepoints& to) {
+      if (&string != &to.string) {
+        throw OutOfRangeException {
+            "start and end are not from the same string"};
+      }
+
+      index_ = to.index_;
+      return *this;
+    }
+
     bool starts_with(
         Codepoints rhs) {
       while (*this && rhs) {
@@ -269,9 +283,9 @@ public:
       throw OutOfRangeException {"start and end are not from the same string"};
     }
 
-    data_ = Vector {
-        start.string.data.data() + start.index_,
-        start.string.data.data() + end.index_};
+    data_ = Vector(
+        start.string.data_.data() + start.index_,
+        start.string.data_.data() + end.index_);
 
     normalize_();
   }
