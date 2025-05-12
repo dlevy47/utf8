@@ -120,6 +120,31 @@ public:
       return *this;
     }
 
+    bool starts_with(
+        Codepoints rhs) {
+      while (*this && rhs) {
+        if (next() != rhs.next()) {
+          return false;
+        }
+      }
+
+      return !(bool)rhs;
+    }
+
+    bool operator==(
+        Codepoints rhs) const {
+      auto us {*this};
+      auto them {rhs};
+
+      while (us && them) {
+        if (us.next() != them.next()) {
+          return false;
+        }
+      }
+
+      return ((bool)us) == ((bool)them);
+    }
+
     explicit operator bool() const { return index_ < end_; }
 
   private:
@@ -156,6 +181,12 @@ public:
           start_ {0},
           end_ {string.data_.size() - 1} {}
 
+    View(
+        const Codepoints& cp)
+        : string {cp.string},
+          start_ {cp.index_},
+          end_ {cp.end_} {}
+
     Codepoints codepoints() const { return Codepoints {string, start_, end_}; }
 
     View from(
@@ -180,21 +211,17 @@ public:
 
     bool operator==(
         const Codepoints& rhs) const {
-      auto us {codepoints()};
-      auto them {rhs};
-
-      while (us && them) {
-        if (us.next() != them.next()) {
-          return false;
-        }
-      }
-
-      return ((bool)us) == ((bool)them);
+      return codepoints() == rhs;
     }
 
     bool operator==(
         const View& rhs) const {
       return *this == rhs.codepoints();
+    }
+
+    bool starts_with(
+        const View& rhs) const {
+      return codepoints().starts_with(rhs.codepoints());
     }
 
   private:

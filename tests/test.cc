@@ -110,6 +110,17 @@ TEST(
 
 TEST(
     StringTests,
+    StartsWith) {
+  const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
+  const auto string2 = utf8::String::from_cstr_unchecked("1234");
+  const auto string3 = utf8::String::from_cstr_unchecked("word");
+
+  EXPECT_TRUE(string1.view().starts_with(string2.view()));
+  EXPECT_FALSE(string1.view().starts_with(string3.view()));
+}
+
+TEST(
+    StringTests,
     Hash) {
   const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
   const auto string2 = utf8::String::from_cstr_unchecked("word");
