@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <sstream>
 #include <utf8/stlscanner.hh>
 #include <utf8/stlstring.hh>
 
@@ -88,6 +89,21 @@ TEST(
   EXPECT_NE(string3, string1);
   EXPECT_NE(string3, string2);
   EXPECT_EQ(string3, string3);
+}
+
+TEST(
+    StringTests,
+    OStream) {
+  const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
+  const auto string2 = utf8::String::from_cstr_unchecked("word");
+
+  std::stringstream ss {};
+
+  ss << string1;
+  EXPECT_EQ(ss.str(), "1234 word");
+
+  ss << string2;
+  EXPECT_EQ(ss.str(), "1234 wordword");
 }
 
 TEST(

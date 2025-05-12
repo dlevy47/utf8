@@ -296,6 +296,12 @@ public:
   Codepoints codepoints() const { return Codepoints {*this}; }
   View       view() const { return View {*this}; }
 
+  // c_str is included for compatibility with methods that expect C-style null
+  // terminated strings.
+  const char* c_str() const {
+    return reinterpret_cast<const char*>(data_.data());
+  }
+
 private:
   Vector data_ {};
 

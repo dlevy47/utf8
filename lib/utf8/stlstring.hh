@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <ostream>
 #include <vector>
 
 #include "string.hh"
@@ -33,5 +34,11 @@ static utf8::String from_string_unchecked(
   return utf8::String::from_cstr_unchecked(s.c_str(), s.size() + 1);
 }
 } // namespace string
+
+std::ostream& operator<<(
+    std::ostream& os,
+    const String& s) {
+  return os << s.c_str();
+}
 
 } // namespace utf8
