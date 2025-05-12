@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
+#include <unordered_map>
+
 #include <utf8/stlscanner.hh>
 #include <utf8/stlstring.hh>
 
@@ -104,6 +106,24 @@ TEST(
 
   ss << string2;
   EXPECT_EQ(ss.str(), "1234 wordword");
+}
+
+TEST(
+    StringTests,
+    Hash) {
+  const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
+  const auto string2 = utf8::String::from_cstr_unchecked("word");
+  const auto string3 = utf8::String::from_cstr_unchecked("wordiness");
+
+  std::unordered_map<utf8::String, int> map {};
+
+  map[string1] = 22;
+  map[string2] = 33;
+  map[string3] = 44;
+
+  EXPECT_EQ(map[string1], 22);
+  EXPECT_EQ(map[string2], 33);
+  EXPECT_EQ(map[string3], 44);
 }
 
 TEST(

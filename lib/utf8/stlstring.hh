@@ -42,3 +42,11 @@ inline std::ostream& operator<<(
 }
 
 } // namespace utf8
+
+// std::hash specialization for String.
+template <> struct std::hash<utf8::String> {
+  std::size_t operator()(
+      const utf8::String& s) const {
+    return std::hash<std::string_view> {}(std::string_view {s.c_str()});
+  }
+};
