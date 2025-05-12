@@ -9,7 +9,7 @@
 namespace utf8 {
 
 struct StringTraits {
-  using CodepointType     = std::uint32_t;
+  using CodepointType     = char32_t;
   using SizeType          = std::size_t;
   using Vector            = std::vector<uint8_t>;
   using OptionalCodepoint = std::optional<uint32_t>;
@@ -35,7 +35,7 @@ static utf8::String from_string_unchecked(
 }
 } // namespace string
 
-std::ostream& operator<<(
+inline std::ostream& operator<<(
     std::ostream& os,
     const String& s) {
   return os << s.c_str();
