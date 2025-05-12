@@ -178,6 +178,25 @@ public:
       return View {string, from.index_, to.index_};
     }
 
+    bool operator==(
+        const Codepoints& rhs) const {
+      auto us {codepoints()};
+      auto them {rhs};
+
+      while (us && them) {
+        if (us.next() != them.next()) {
+          return false;
+        }
+      }
+
+      return ((bool)us) == ((bool)them);
+    }
+
+    bool operator==(
+        const View& rhs) const {
+      return *this == rhs.codepoints();
+    }
+
   private:
     SizeType start_;
     SizeType end_;
@@ -248,16 +267,7 @@ public:
 
   bool operator==(
       const String& rhs) const {
-    auto us {codepoints()};
-    auto them {rhs.codepoints()};
-
-    while (us && them) {
-      if (us.next() != them.next()) {
-        return false;
-      }
-    }
-
-    return ((bool)us) == ((bool)them);
+    return view() == rhs.view();
   }
 
   template <typename OtherTraits>
