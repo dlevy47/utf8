@@ -246,6 +246,20 @@ public:
       String<OtherTraits>&& rhs)
       : data_ {Traits::move_vector(rhs.data_)} {}
 
+  bool operator==(
+      const String& rhs) const {
+    auto us {codepoints()};
+    auto them {rhs.codepoints()};
+
+    while (us && them) {
+      if (us.next() != them.next()) {
+        return false;
+      }
+    }
+
+    return ((bool)us) == ((bool)them);
+  }
+
   template <typename OtherTraits>
   String& operator=(
       const String<OtherTraits>& rhs) {

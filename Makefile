@@ -1,8 +1,11 @@
 .PHONY: build test
 
-build:
+build/gen: CMakeLists.txt vcpkg-configuration.json
 	mkdir -p build
-	cmake --preset=vcpkg
+	cmake --preset=default
+	touch build/gen
+
+build: build/gen
 	cmake --build build
 
 test: build

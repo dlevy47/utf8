@@ -73,6 +73,24 @@ TEST(
 }
 
 TEST(
+    StringTests,
+    Equal) {
+  const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
+  const auto string2 = utf8::String::from_cstr_unchecked("1234 word");
+  const auto string3 = utf8::String::from_cstr_unchecked("word");
+
+  EXPECT_EQ(string1, string1);
+  EXPECT_EQ(string1, string2);
+  EXPECT_NE(string1, string3);
+  EXPECT_EQ(string2, string1);
+  EXPECT_EQ(string2, string2);
+  EXPECT_NE(string2, string3);
+  EXPECT_NE(string3, string1);
+  EXPECT_NE(string3, string2);
+  EXPECT_EQ(string3, string3);
+}
+
+TEST(
     ScannerTests,
     Scan) {
   const auto string = utf8::String::from_cstr_unchecked("1234 word");
