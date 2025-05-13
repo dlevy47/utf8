@@ -2,7 +2,7 @@
 
 build/gen: CMakeLists.txt vcpkg-configuration.json
 	mkdir -p build
-	cmake --preset=default
+	cmake --preset=default -DCMAKE_BUILD_TYPE=Debug
 	touch build/gen
 
 build: build/gen

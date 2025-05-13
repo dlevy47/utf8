@@ -94,6 +94,24 @@ TEST(
 }
 
 TEST(
+    CodepointsTests,
+    Comparisons) {
+  const auto string = utf8::String::from_cstr_unchecked("1234 word");
+  auto       cp1    = string.codepoints();
+  auto       cp2    = cp1;
+  auto       cp3    = cp2;
+
+  cp2.advance(2);
+  cp3.advance(4);
+
+  EXPECT_EQ(cp1, cp1);
+  EXPECT_LT(cp1, cp2);
+  EXPECT_LT(cp2, cp3);
+  EXPECT_GT(cp3, cp2);
+  EXPECT_GT(cp2, cp1);
+}
+
+TEST(
     StringTests,
     OStream) {
   const auto string1 = utf8::String::from_cstr_unchecked("1234 word");
@@ -115,8 +133,13 @@ TEST(
   const auto string2 = utf8::String::from_cstr_unchecked("1234");
   const auto string3 = utf8::String::from_cstr_unchecked("word");
 
-  EXPECT_TRUE(string1.view().starts_with(string2.view()));
-  EXPECT_FALSE(string1.view().starts_with(string3.view()));
+  const auto result1 = string1.view().starts_with(string2.view());
+  const auto result2 = string1.view().starts_with(string3.view());
+  EXPECT_TRUE(result1);
+  EXPECT_FALSE(result2);
+
+  EXPECT_GT(result1.at, string1.codepoints());
+  EXPECT_GT(result2.at, string1.codepoints());
 }
 
 TEST(

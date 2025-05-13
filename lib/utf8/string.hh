@@ -54,7 +54,13 @@ public:
     using Exception::Exception;
   };
 
-  // Codepoints is an iterator over the codepoints of a String.
+  // Codepoints is an iterator over the codepoints of a String. Codepoints is
+  // also used as a cursor into a String; because utf8 strings are not generally
+  // byte indexable, Codepoints can be used to refer to specific codepoint
+  // boundaries inside a String at which a codepoint is known to start or end.
+  //
+  // Because Codepoints is also an iterator, it can have an end limit,
+  // specifically when constructed from a View.
   class Codepoints {
   public:
     // string is the String that this Codepoints reads from.
@@ -134,29 +140,24 @@ public:
       return *this;
     }
 
-    bool starts_with(
-        Codepoints rhs) {
-      while (*this && rhs) {
-        if (next() != rhs.next()) {
-          return false;
-        }
+    // Comparison operators for Codepoints require that both codepoints were
+    // created from the same String.
+    auto operator<=>(
+        const Codepoints& rhs) const {
+      if (&string != &rhs.string) {
+        throw OutOfRangeException {"iterators are not from the same string"};
       }
 
-      return !(bool)rhs;
+      return index_ <=> rhs.index_;
     }
 
     bool operator==(
-        Codepoints rhs) const {
-      auto us {*this};
-      auto them {rhs};
-
-      while (us && them) {
-        if (us.next() != them.next()) {
-          return false;
-        }
+        const Codepoints& rhs) const {
+      if (&string != &rhs.string) {
+        throw OutOfRangeException {"iterators are not from the same string"};
       }
 
-      return ((bool)us) == ((bool)them);
+      return index_ == rhs.index_;
     }
 
     explicit operator bool() const { return index_ < end_; }
@@ -223,19 +224,44 @@ public:
       return View {string, from.index_, to.index_};
     }
 
-    bool operator==(
-        const Codepoints& rhs) const {
-      return codepoints() == rhs;
-    }
-
+    // operator== checks if the utf8 string range referred to by this View
+    // contains the same codepoints as the provided View, including the same
+    // number of codepoints.
     bool operator==(
         const View& rhs) const {
-      return *this == rhs.codepoints();
+      auto us {codepoints()};
+      auto them {rhs.codepoints()};
+
+      while (us && them) {
+        if (us.next() != them.next()) {
+          return false;
+        }
+      }
+
+      return !us && !them;
     }
 
-    bool starts_with(
+    struct FlaggedCodepoint {
+      bool       flag {false};
+      Codepoints at;
+
+      explicit operator bool() const { return flag; }
+    };
+
+    FlaggedCodepoint starts_with(
         const View& rhs) const {
-      return codepoints().starts_with(rhs.codepoints());
+      auto us {codepoints()};
+      auto them {rhs.codepoints()};
+
+      while (us && them) {
+        if (us.next() != them.next()) {
+          return {
+              .at = us,
+          };
+        }
+      }
+
+      return {.flag = true, .at = us};
     }
 
   private:
