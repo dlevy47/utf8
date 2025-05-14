@@ -23,9 +23,12 @@ enum : utf8_u8 {
   CONTINUE  = 0b10000000,
 };
 
-inline utf8_usize encode(
-    utf8_u8 (&bytes)[4],
+template <const utf8_usize N>
+utf8_usize encode(
+    utf8_u8 (&bytes)[N],
     const utf8_u32 codepoint) {
+  static_assert(N >= 4, "buffer must be big enough for encoded codepoint");
+
   if (codepoint >= 0x0 && codepoint < 0x80) {
     bytes[0] = static_cast<utf8_u8>(codepoint);
 

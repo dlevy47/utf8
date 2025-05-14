@@ -35,13 +35,28 @@ static utf8::String from_string_unchecked(
 }
 } // namespace string
 
+} // namespace utf8
+
 inline std::ostream& operator<<(
-    std::ostream& os,
-    const String& s) {
+    std::ostream&       os,
+    const utf8::String& s) {
   return os << s.c_str();
 }
 
-} // namespace utf8
+inline std::ostream& operator<<(
+    std::ostream&             os,
+    const utf8::String::View& view) {
+  auto cp {view.codepoints()};
+
+  while (const auto c = cp.next()) {
+    uint8_t encoded[5] {0};
+    utf8::encode(encoded, *c);
+
+    os << (const char*)encoded;
+  }
+
+  return os;
+}
 
 // std::hash specialization for String.
 template <> struct std::hash<utf8::String> {

@@ -124,6 +124,14 @@ TEST(
 
   ss << string2;
   EXPECT_EQ(ss.str(), "1234 wordword");
+
+  ss.str("");
+
+  ss << string1.view();
+  EXPECT_EQ(ss.str(), "1234 word");
+
+  ss << string2.view();
+  EXPECT_EQ(ss.str(), "1234 wordword");
 }
 
 TEST(
