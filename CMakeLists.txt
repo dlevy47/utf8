@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-Werror)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  add_compile_options(/WX)
+endif()
+
 find_package(GTest CONFIG REQUIRED)
 
 add_library(utf8 INTERFACE)

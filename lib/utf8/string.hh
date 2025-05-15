@@ -42,7 +42,7 @@ public:
         const char* what)
         : what_ {what} {}
 
-    virtual const char* what() const noexcept { return what_; }
+    virtual const char* what() const noexcept override { return what_; }
 
   private:
     const char* what_ {nullptr};
