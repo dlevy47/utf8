@@ -332,6 +332,11 @@ public:
       String<OtherTraits>&& rhs)
       : data_ {Traits::move_vector(rhs.data_)} {}
 
+  bool operator<=>(
+      const String& rhs) const {
+    return view() <=> rhs.view();
+  }
+
   bool operator==(
       const String& rhs) const {
     return view() == rhs.view();
