@@ -5,3 +5,5 @@ compile_commands.json
 CMakeUserPresets.json
 vcpkg-manifest-install.log
 vcpkg_installed
+/.clangd-build/
+/.cache/

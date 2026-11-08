@@ -2,8 +2,7 @@
 
 #include "utf8.hh"
 
-namespace utf8 {
-namespace string {
+namespace utf8::string {
 
 template <
     typename TCodepointType,
@@ -403,5 +402,4 @@ private:
   }
 };
 
-} // namespace string
-} // namespace utf8
+} // namespace utf8::string

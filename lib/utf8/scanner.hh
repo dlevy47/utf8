@@ -3,8 +3,7 @@
 #include "string.hh"
 #include "utf8/utf8.hh"
 
-namespace utf8 {
-namespace scanner {
+namespace utf8::scanner {
 
 enum struct Error {
   None,
@@ -17,6 +16,7 @@ template <typename Traits, typename T> struct Scan {
       T                                   t,
       string::String<Traits>::Codepoints& codepoints) {
     static_assert(false, "unimplemented");
+    return {};
   }
 };
 
@@ -61,11 +61,13 @@ template <typename Traits, int Base> struct NumericBase {
   static bool valid(
       Traits::CodepointType codepoint) {
     static_assert(false, "unimplemented");
+    return false;
   }
 
   static unsigned int convert(
       Traits::CodepointType codepoint) {
     static_assert(false, "unimplemented");
+    return 0;
   }
 };
 
@@ -114,7 +116,7 @@ template <typename Traits> struct Scan<Traits, string::String<Traits>*> {
 
 template <typename Traits, typename Integral, int Base>
 struct Scan<Traits, UnsignedInteger<Integral, Base>> {
-  using NumericBase = NumericBase<Traits, Base>;
+  using NumericBase = ::utf8::scanner::NumericBase<Traits, Base>;
 
   static Error scan(
       UnsignedInteger<
@@ -150,5 +152,4 @@ struct Scan<Traits, UnsignedInteger<Integral, Base>> {
   }
 };
 
-} // namespace scanner
-} // namespace utf8
+} // namespace utf8::scanner

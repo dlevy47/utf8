@@ -9,6 +9,14 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "Yes",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
+    },
+    {
+      "name": "nix",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/.clangd-build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "Yes"
+      }
     }
   ]
 }
