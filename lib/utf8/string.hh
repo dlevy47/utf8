@@ -1,24 +1,12 @@
 #pragma once
 
+#include <compare>
+
+#include "exception.hh"
+#include "traits.hh"
 #include "utf8.hh"
 
 namespace utf8::string {
-
-template <
-    typename TCodepointType,
-    typename TSizeType,
-    typename TVector,
-    typename TOptionalCodepoint>
-struct Traits {
-  using CodepointType     = TCodepointType;
-  using SizeType          = TSizeType;
-  using Vector            = TVector;
-  using OptionalCodepoint = TOptionalCodepoint;
-
-  constexpr Vector&& move_vector(Vector&& t) noexcept;
-  SizeType           strlen(const char* s) noexcept;
-};
-
 // String is an immutable utf8 encoded string. String's contents are generally
 // guaranteed to always be valid null terminated utf8 with no internal nulls.
 // Note that these guarantees are only fully held when creation of a String is
@@ -33,19 +21,8 @@ public:
   using Vector            = typename Traits::Vector;
   using OptionalCodepoint = typename Traits::OptionalCodepoint;
   using BaseException     = typename Traits::BaseException;
-
-  // Exception is the base exception that all String exceptions inherit from.
-  class Exception : BaseException {
-  public:
-    Exception(
-        const char* what)
-        : what_ {what} {}
-
-    virtual const char* what() const noexcept override { return what_; }
-
-  private:
-    const char* what_ {nullptr};
-  };
+  using Exception         = typename ::utf8::string::Exception<Traits>;
+  using Checks            = typename Traits::Checks;
 
   // OutOfRangeException is thrown when a [start, end) interval is not valid, or
   // when other provided indices are invalid.
@@ -130,10 +107,7 @@ public:
     // endpoint of this Codepoints is not modified.
     Codepoints& move_to(
         const Codepoints& to) {
-      if (&string != &to.string) {
-        throw OutOfRangeException {
-            "start and end are not from the same string"};
-      }
+      Checks::check_same_object(&string, &to.string);
 
       index_ = to.index_;
       return *this;
@@ -143,20 +117,24 @@ public:
     // created from the same String.
     auto operator<=>(
         const Codepoints& rhs) const {
-      if (&string != &rhs.string) {
-        throw OutOfRangeException {"iterators are not from the same string"};
-      }
+      Checks::check_same_object(&string, &rhs.string);
 
       return index_ <=> rhs.index_;
     }
 
     bool operator==(
         const Codepoints& rhs) const {
-      if (&string != &rhs.string) {
-        throw OutOfRangeException {"iterators are not from the same string"};
-      }
+      Checks::check_same_object(&string, &rhs.string);
 
       return index_ == rhs.index_;
+    }
+
+    // end returns a Codepoints pointing to the end of this Codepoints.
+    // A next() call here will return None.
+    Codepoints end() const {
+      Codepoints ret {*this};
+      ret.index_ = ret.end_;
+      return ret;
     }
 
     explicit operator bool() const { return index_ < end_; }
@@ -205,17 +183,22 @@ public:
 
     View from(
         const Codepoints& from) const {
+      Checks::check_same_object(&string, &from.string);
       return View {string, from.index_, end_};
     }
 
     View to(
         const Codepoints& to) const {
+      Checks::check_same_object(&string, &to.string);
       return View {string, start_, to.index_};
     }
 
     View from_to(
         const Codepoints& from,
         const Codepoints& to) const {
+      Checks::check_same_object(&string, &from.string);
+      Checks::check_same_object(&from.string, &to.string);
+
       if (to.index_ < from.index_) {
         throw OutOfRangeException {"invalid index"};
       }
@@ -223,21 +206,36 @@ public:
       return View {string, from.index_, to.index_};
     }
 
-    // operator== checks if the utf8 string range referred to by this View
-    // contains the same codepoints as the provided View, including the same
-    // number of codepoints.
-    bool operator==(
+    // operator<=> compares the utf8 string range referred to by this View
+    // with the provided View.
+    std::strong_ordering operator<=>(
         const View& rhs) const {
       auto us {codepoints()};
       auto them {rhs.codepoints()};
 
       while (us && them) {
-        if (us.next() != them.next()) {
-          return false;
+        const auto u {us.next()};
+        const auto t {them.next()};
+        if (u != t) {
+          return u <=> t;
         }
       }
 
-      return !us && !them;
+      // Equal?
+      if (!us && !them) {
+        return std::strong_ordering::equivalent;
+      } else if (us) {
+        // us is longer.
+        return std::strong_ordering::greater;
+      } else {
+
+        return std::strong_ordering::less;
+      }
+    }
+
+    bool operator==(
+        const View& rhs) const {
+      return this->operator<=>(rhs) == std::strong_ordering::equivalent;
     }
 
     struct FlaggedCodepoint {
@@ -260,7 +258,7 @@ public:
         }
       }
 
-      return {.flag = true, .at = us};
+      return {.flag = !them, .at = us};
     }
 
   private:
@@ -304,8 +302,10 @@ public:
   String(
       const Codepoints& start,
       const Codepoints& end) {
-    if (&start.string != &end.string) {
-      throw OutOfRangeException {"start and end are not from the same string"};
+    Checks::check_same_object(&start.string, &end.string);
+
+    if (start > end) {
+      throw OutOfRangeException {"start is after end"};
     }
 
     data_ = Vector(
@@ -331,7 +331,7 @@ public:
       String<OtherTraits>&& rhs)
       : data_ {Traits::move_vector(rhs.data_)} {}
 
-  bool operator<=>(
+  auto operator<=>(
       const String& rhs) const {
     return view() <=> rhs.view();
   }
@@ -387,7 +387,7 @@ private:
   Vector data_ {};
 
   void normalize_() {
-    if (data_.back() != '\0') {
+    if (data_.size() == 0 || data_.back() != '\0') {
       data_.push_back('\0');
     }
   }

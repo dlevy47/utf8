@@ -5,6 +5,7 @@
 #include <ostream>
 #include <vector>
 
+#include "safety.hh"
 #include "string.hh"
 
 namespace utf8 {
@@ -15,6 +16,7 @@ struct StringTraits {
   using Vector            = std::vector<uint8_t>;
   using OptionalCodepoint = std::optional<uint32_t>;
   using BaseException     = std::exception;
+  using Checks            = string::ChecksEnabled<StringTraits>;
 
   constexpr static Vector&& move_vector(
       Vector& t) noexcept {

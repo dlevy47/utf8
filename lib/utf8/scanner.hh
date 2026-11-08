@@ -103,12 +103,9 @@ template <typename Traits> struct Scan<Traits, string::String<Traits>*> {
   static Error scan(
       string::String<Traits>*             into,
       string::String<Traits>::Codepoints& codepoints) {
-    typename Traits::Vector ret {};
-    while (auto cp = codepoints.next()) {
-      ret.push_back(*cp);
-    }
-
-    *into = string::String<Traits> {Traits::move_vector(ret)};
+    const auto start = codepoints;
+    const auto end   = codepoints.end();
+    *into            = string::String<Traits> {start, end};
 
     return Error::None;
   }
@@ -133,12 +130,13 @@ struct Scan<Traits, UnsignedInteger<Integral, Base>> {
         break;
       }
 
-      cp      = codepoints.next();
-      started = true;
-
-      if (value > 0 && MAX / value < Base) {
+      const Integral digit = NumericBase::convert(*cp);
+      if (value > (MAX - digit) / Base) {
         return Error::NumericOverflow;
       }
+
+      cp      = codepoints.next();
+      started = true;
 
       value = (value * Base) + NumericBase::convert(*cp);
     }

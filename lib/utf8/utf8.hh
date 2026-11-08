@@ -15,12 +15,15 @@
 namespace utf8 {
 
 enum : utf8_u8 {
-  ONEBYTE   = 0b00000000,
+  ASCII     = 0b01111111,
   TWOBYTE   = 0b11000000,
   THREEBYTE = 0b11100000,
   FOURBYTE  = 0b11110000,
   MASK      = 0b00111111,
-  CONTINUE  = 0b10000000,
+
+  CONTINUE       = 0b10000000,
+  CONTINUE_START = 0b10000000,
+  CONTINUE_END   = 0b11000000,
 };
 
 template <const utf8_usize N>
@@ -28,6 +31,10 @@ utf8_usize encode(
     utf8_u8 (&bytes)[N],
     const utf8_u32 codepoint) {
   static_assert(N >= 4, "buffer must be big enough for encoded codepoint");
+
+  if (codepoint >= 0xD800 && codepoint <= 0xDFFF) {
+    return 0;
+  }
 
   if (codepoint >= 0x0 && codepoint < 0x80) {
     bytes[0] = static_cast<utf8_u8>(codepoint);
@@ -44,7 +51,7 @@ utf8_usize encode(
     bytes[2] = CONTINUE | (static_cast<utf8_u8>(codepoint) & MASK);
 
     return 3;
-  } else if (codepoint >= 0x10000 && codepoint < 0x11000) {
+  } else if (codepoint >= 0x10000 && codepoint < 0x110000) {
     bytes[0] = FOURBYTE | (static_cast<utf8_u8>(codepoint >> 18) & 0b111);
     bytes[1] = CONTINUE | (static_cast<utf8_u8>(codepoint >> 12) & MASK);
     bytes[2] = CONTINUE | (static_cast<utf8_u8>(codepoint >> 6) & MASK);
@@ -54,6 +61,11 @@ utf8_usize encode(
   }
 
   return 0;
+}
+
+inline bool continues(
+    const utf8_u8 x) {
+  return (x >= CONTINUE_START) && (x < CONTINUE_END);
 }
 
 inline utf8_u32 codepoint(
@@ -66,7 +78,7 @@ inline utf8_u32 codepoint(
     }
 
     if ((codepoint & FOURBYTE) == FOURBYTE) {
-      if (s[1] == 0 || s[2] == 0 || s[3] == 0) {
+      if (!continues(s[1]) || !continues(s[2]) || !continues(s[3])) {
         break;
       }
 
@@ -75,10 +87,14 @@ inline utf8_u32 codepoint(
                   static_cast<utf8_u32>(s[2] & MASK) << 6 |
                   static_cast<utf8_u32>(s[3] & MASK);
 
+      if (codepoint < 0x10000 || codepoint > 0x10FFFF) {
+        break;
+      }
+
       advance = 4;
       return codepoint;
     } else if ((codepoint & THREEBYTE) == THREEBYTE) {
-      if (s[1] == 0 || s[2] == 0) {
+      if (!continues(s[1]) || !continues(s[2])) {
         break;
       }
 
@@ -86,19 +102,35 @@ inline utf8_u32 codepoint(
                   static_cast<utf8_u32>(s[1] & MASK) << 6 |
                   static_cast<utf8_u32>(s[2] & MASK);
 
+      if (codepoint < 0x0800 || codepoint > 0xFFFF) {
+        break;
+      }
+
+      if (codepoint >= 0xD800 && codepoint <= 0xDFFF) {
+        break;
+      }
+
       advance = 3;
       return codepoint;
     } else if ((codepoint & TWOBYTE) == TWOBYTE) {
-      if (s[1] == 0) {
+      if (!continues(s[1])) {
         break;
       }
 
       codepoint = static_cast<utf8_u32>(codepoint & ~TWOBYTE) << 6 |
                   static_cast<utf8_u32>(s[1] & MASK);
 
+      if (codepoint < 0x0080 || codepoint > 0x07FF) {
+        break;
+      }
+
       advance = 2;
       return codepoint;
-    } else if ((codepoint & ONEBYTE) == ONEBYTE) {
+    } else if ((codepoint | ASCII) == ASCII) {
+      if (codepoint > 0x7F) {
+        break;
+      }
+
       advance = 1;
       return codepoint;
     }

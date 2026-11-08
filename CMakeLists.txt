@@ -22,7 +22,13 @@ target_include_directories(
 file(GLOB_RECURSE SOURCES "lib/*.hh")
 target_sources(utf8 INTERFACE FILE_SET headers BASE_DIRS "lib/" TYPE HEADERS FILES ${SOURCES})
 
-add_executable(tests tests/test.cc)
+add_executable(
+  tests
+  tests/test.cc
+  tests/scanner_test.cc
+  tests/string_test.cc
+  tests/utf8_test.cc
+)
 target_link_libraries(tests PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main utf8)
 target_include_directories(
   tests PRIVATE
